@@ -44,7 +44,7 @@ jobs:
           fi
 
       - name: run robovmArchive
-        run: ./gradlew robovmArchive --no-daemon
+        run: ./gradlew robovmArchive --no-daemon --info
         working-directory: mindustry
 
       - name: list generated ipa files
