@@ -31,6 +31,12 @@ jobs:
       - name: make gradle wrapper executable
         run: chmod +x ./mindustry/gradlew
 
+      - name: patch ios/build.gradle
+        run: |
+          sed -i '' '/iosSignIdentity/d' mindustry/ios/build.gradle
+          sed -i '' '/iosProvisioningProfil/d' mindustry/ios/build.gradle
+          sed -i '' '/iosSkipSigning/d' mindustry/ios/build.gradle
+
       - name: run robovmArchive
         run: ./gradlew robovmArchive --no-daemon
         working-directory: mindustry
