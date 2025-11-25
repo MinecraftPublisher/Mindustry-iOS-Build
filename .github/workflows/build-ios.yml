@@ -33,9 +33,15 @@ jobs:
 
       - name: patch ios/build.gradle
         run: |
-          sed -i '' '/iosSignIdentity/d' mindustry/ios/build.gradle
-          sed -i '' '/iosProvisioningProfil/d' mindustry/ios/build.gradle
-          sed -i '' '/iosSkipSigning/d' mindustry/ios/build.gradle
+          file="mindustry/ios/build.gradle"
+          sed -i '' '/iosSignIdentity =/d' "$file"
+          sed -i '' '/iosProvisioningProfile =/d' "$file"
+          if grep -q 'iosSkipSigning' "$file"; then
+            sed -i '' 's/^[[:space:]]*iosSkipSigning[[:space:]]*=.*/iosSkipSigning = true/' "$file"
+          else
+            echo "" >> "$file"
+            echo "iosSkipSigning = true" >> "$file"
+          fi
 
       - name: run robovmArchive
         run: ./gradlew robovmArchive --no-daemon
