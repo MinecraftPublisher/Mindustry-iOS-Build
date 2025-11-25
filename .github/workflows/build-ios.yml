@@ -1,8 +1,6 @@
 name: build ios ipa
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -10,8 +8,17 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: checkout repo
+      - name: checkout this repo (workflow repo)
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      # checkout the target repo into subfolder "mindustry"
+      - name: checkout mindustry repo
+        uses: actions/checkout@v4
+        with:
+          repository: Anuken/Mindustry
+          path: mindustry
 
       - name: setup java 17
         uses: actions/setup-java@v4
@@ -20,18 +27,19 @@ jobs:
           java-version: '17'
 
       - name: make gradle wrapper executable
-        run: chmod +x ./gradlew
+        run: chmod +x ./mindustry/gradlew
 
       - name: run robovmArchive
         run: ./gradlew robovmArchive --no-daemon
+        working-directory: mindustry
 
       - name: list generated ipa files
         run: |
           echo "found ipa files:"
-          find . -type f -name "*.ipa" -print || true
+          find mindustry -type f -name "*.ipa" -print || true
 
       - name: upload ipa artifact
         uses: actions/upload-artifact@v4
         with:
           name: mindustry-ios-ipa
-          path: '**/*.ipa'
+          path: mindustry/**/*.ipa
