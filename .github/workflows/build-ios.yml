@@ -40,7 +40,7 @@ jobs:
         run: |
           mkdir -p mindustry/ios/libs
           cp Arc/natives/natives-freetype-ios/libs/libarc-freetype.a mindustry/ios/libs/
-          cp Arc/natives/*.a mindustry/ios/libs/
+          cp Arc/natives/**/*.a mindustry/ios/libs/ || true
           
           echo "Verification: Contents of mindustry/ios/libs/"
           ls -l mindustry/ios/libs/
