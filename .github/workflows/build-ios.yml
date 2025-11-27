@@ -57,6 +57,14 @@ jobs:
             echo "iosSkipSigning = true" >> "$file"
           fi
 
+      - name: Remove MetalANGLE frameworks
+        run: |
+          file="mindustry/ios/build.gradle"
+          sed -i '' '/MetalANGLEKit/d' "$file"
+          sed -i '' '/libGLESv2/d' "$file"
+          sed -i '' '/libEGL/d' "$file"
+          sed -i '' '/libfeature_support/d' "$file"
+
       - name: Run robovmArchive
         run: ./gradlew robovmArchive --no-daemon --info
         working-directory: mindustry
