@@ -7,33 +7,48 @@ on:
 
 jobs:
   build-ipa:
-    runs-on: macos-latest
+    runs-on: macos-latest # macOS is required for iOS builds
 
     steps:
-      - name: checkout this repo (workflow repo)
+      - name: Checkout Workflow Repository
         uses: actions/checkout@v4
         with:
+          # This is the repository where your workflow file lives
           persist-credentials: true
 
-      # checkout the target repo into subfolder "mindustry"
-      - name: checkout mindustry repo
+      # 1. Checkout Mindustry (Target Repo)
+      - name: Checkout Mindustry Repository
         uses: actions/checkout@v4
         with:
           repository: Anuken/Mindustry
           path: mindustry
-          lfs: true
-          submodules: recursive
 
-      - name: setup java 17
+      # 2. Checkout Arc (Source of Native Libraries)
+      # This step is CRITICAL to get the missing .a files.
+      - name: Checkout Arc Repository for Natives
+        uses: actions/checkout@v4
+        with:
+          repository: Anuken/Arc
+          path: Arc
+
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+      - name: Copy iOS Native Libraries
+        run: |
+          mkdir -p mindustry/ios/libs
+          cp Arc/natives/natives-freetype-ios/libs/libarc-freetype.a mindustry/ios/libs/
+          cp Arc/natives/natives-ios/libs/* mindustry/ios/libs/
+          
+          echo "Verification: Contents of mindustry/ios/libs/"
+          ls -l mindustry/ios/libs/
 
-      - name: make gradle wrapper executable
+      - name: Make Gradle Wrapper Executable
         run: chmod +x ./mindustry/gradlew
 
-      - name: patch ios/build.gradle
+      - name: Skip signing
         run: |
           file="mindustry/ios/build.gradle"
           sed -i '' '/iosSignIdentity =/d' "$file"
@@ -44,18 +59,21 @@ jobs:
             echo "" >> "$file"
             echo "iosSkipSigning = true" >> "$file"
           fi
+        working-directory: mindustry 
 
-      - name: run robovmArchive
+      - name: Run robovmArchive
         run: ./gradlew robovmArchive --no-daemon --info
         working-directory: mindustry
 
-      - name: list generated ipa files
-        run: |
-          echo "found ipa files:"
-          find mindustry -type f -name "*.ipa" -print || true
-
-      - name: upload ipa artifact
+      - name: Find and Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mindustry-ios-ipa
-          path: mindustry/**/*.ipa
+          name: Mindustry-iOS-IPA
+          path: mindustry/ios/build/robovm.tmp/*.ipa
+          retention-days: 7
+
+      - name: List Generated IPA Files (Optional verification)
+        run: |
+          echo "Found IPA files (should match uploaded file):"
+          find mindustry -type f -name "*.ipa" -print || true
+
