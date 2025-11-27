@@ -1,144 +1,144 @@
 name: build ios ipa
 
 on:
-push:
-branches: [ main ]
-workflow_dispatch:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-build-ipa:
-runs-on: macos-latest
+  build-ipa:
+    runs-on: macos-latest
 
-steps:
-  - name: Checkout Workflow Repository
-    uses: actions/checkout@v4
-    with:
-      persist-credentials: true
-      
-  - name: Checkout Mindustry Repository
-    uses: actions/checkout@v4
-    with:
-      repository: Anuken/Mindustry
-      path: mindustry
-      lfs: true
-      submodules: recursive
+    steps:
+      - name: Checkout Workflow Repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          
+      - name: Checkout Mindustry Repository
+        uses: actions/checkout@v4
+        with:
+          repository: Anuken/Mindustry
+          path: mindustry
+          lfs: true
+          submodules: recursive
 
-  - name: Checkout Arc Repository for Natives
-    uses: actions/checkout@v4
-    with:
-      repository: Anuken/Arc
-      path: Arc
+      - name: Checkout Arc Repository for Natives
+        uses: actions/checkout@v4
+        with:
+          repository: Anuken/Arc
+          path: Arc
 
-  - name: Setup Java 17
-    uses: actions/setup-java@v4
-    with:
-      distribution: temurin
-      java-version: '17'
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-  # Cache Gradle dependencies
-  - name: Cache Gradle packages
-    uses: actions/cache@v4
-    with:
-      path: |
-        ~/.gradle/caches
-        ~/.gradle/wrapper
-      key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-      restore-keys: |
-        ${{ runner.os }}-gradle-
+      # Cache Gradle dependencies
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
-  # Cache Maven/RoboVM dependencies
-  - name: Cache Maven packages
-    uses: actions/cache@v4
-    with:
-      path: ~/.m2/repository
-      key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml', '**/*.gradle*') }}
-      restore-keys: |
-        ${{ runner.os }}-maven-
+      # Cache Maven/RoboVM dependencies
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml', '**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
-  # Cache RoboVM cache directory
-  - name: Cache RoboVM
-    uses: actions/cache@v4
-    with:
-      path: ~/.robovm/cache
-      key: ${{ runner.os }}-robovm-${{ hashFiles('mindustry/ios/**') }}
-      restore-keys: |
-        ${{ runner.os }}-robovm-
+      # Cache RoboVM cache directory
+      - name: Cache RoboVM
+        uses: actions/cache@v4
+        with:
+          path: ~/.robovm/cache
+          key: ${{ runner.os }}-robovm-${{ hashFiles('mindustry/ios/**') }}
+          restore-keys: |
+            ${{ runner.os }}-robovm-
 
-  # Cache Gradle build outputs
-  - name: Cache Gradle build
-    uses: actions/cache@v4
-    with:
-      path: |
-        mindustry/.gradle
-        mindustry/build
-        mindustry/*/build
-        Arc/.gradle
-        Arc/build
-        Arc/*/build
-      key: ${{ runner.os }}-gradle-build-${{ github.sha }}
-      restore-keys: |
-        ${{ runner.os }}-gradle-build-
+      # Cache Gradle build outputs
+      - name: Cache Gradle build
+        uses: actions/cache@v4
+        with:
+          path: |
+            mindustry/.gradle
+            mindustry/build
+            mindustry/*/build
+            Arc/.gradle
+            Arc/build
+            Arc/*/build
+          key: ${{ runner.os }}-gradle-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-build-
 
-  # Cache MetalANGLE frameworks
-  - name: Cache MetalANGLE
-    id: cache-metalangle
-    uses: actions/cache@v4
-    with:
-      path: metalangle-frameworks
-      key: metalangle-v1.2
+      # Cache MetalANGLE frameworks
+      - name: Cache MetalANGLE
+        id: cache-metalangle
+        uses: actions/cache@v4
+        with:
+          path: metalangle-frameworks
+          key: metalangle-v1.2
 
-  - name: Download and Extract MetalANGLE Frameworks
-    if: steps.cache-metalangle.outputs.cache-hit != 'true'
-    run: |
-      echo "Downloading MetalANGLE frameworks..."
-      curl -L -o metalanglekit.zip https://github.com/libgdx/MetalANGLEKit/releases/download/v1.2/metalanglekit.zip
-      
-      echo "Extracting frameworks..."
-      mkdir -p metalangle-frameworks
-      unzip -q metalanglekit.zip -d metalangle-frameworks
-      
-      echo "Downloaded frameworks:"
-      ls -la metalangle-frameworks/
+      - name: Download and Extract MetalANGLE Frameworks
+        if: steps.cache-metalangle.outputs.cache-hit != 'true'
+        run: |
+          echo "Downloading MetalANGLE frameworks..."
+          curl -L -o metalanglekit.zip https://github.com/libgdx/MetalANGLEKit/releases/download/v1.2/metalanglekit.zip
+          
+          echo "Extracting frameworks..."
+          mkdir -p metalangle-frameworks
+          unzip -q metalanglekit.zip -d metalangle-frameworks
+          
+          echo "Downloaded frameworks:"
+          ls -la metalangle-frameworks/
 
-  - name: Install MetalANGLE Frameworks to Arc Backend
-    run: |
-      echo "Installing MetalANGLE frameworks to Arc backend..."
-      mkdir -p Arc/backends/backend-robovm/libs/ios
-      
-      # Copy all frameworks
-      cp -R metalangle-frameworks/* Arc/backends/backend-robovm/libs/ios/ || true
-      
-      echo "Installed frameworks:"
-      ls -la Arc/backends/backend-robovm/libs/ios/
+      - name: Install MetalANGLE Frameworks to Arc Backend
+        run: |
+          echo "Installing MetalANGLE frameworks to Arc backend..."
+          mkdir -p Arc/backends/backend-robovm/libs/ios
+          
+          # Copy all frameworks
+          cp -R metalangle-frameworks/* Arc/backends/backend-robovm/libs/ios/ || true
+          
+          echo "Installed frameworks:"
+          ls -la Arc/backends/backend-robovm/libs/ios/
 
-  - name: Copy iOS Native Libraries
-    run: |
-      mkdir -p mindustry/ios/libs
-      cp Arc/natives/natives-freetype-ios/libs/libarc-freetype.a mindustry/ios/libs/
-      cp Arc/natives/**/*.a mindustry/ios/libs/ || true
-      
-      ls -l mindustry/ios/libs/
+      - name: Copy iOS Native Libraries
+        run: |
+          mkdir -p mindustry/ios/libs
+          cp Arc/natives/natives-freetype-ios/libs/libarc-freetype.a mindustry/ios/libs/
+          cp Arc/natives/**/*.a mindustry/ios/libs/ || true
+          
+          ls -l mindustry/ios/libs/
 
-  - name: Make Gradle Wrapper Executable
-    run: chmod +x ./mindustry/gradlew
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x ./mindustry/gradlew
 
-  - name: Skip signing
-    run: |
-      file="mindustry/ios/build.gradle"
-      sed -i '' 's/iosSkipSigning = false/iosSkipSigning = true/' "$file"
+      - name: Skip signing
+        run: |
+          file="mindustry/ios/build.gradle"
+          sed -i '' 's/iosSkipSigning = false/iosSkipSigning = true/' "$file"
 
-  - name: Run robovmArchive
-    run: ./gradlew robovmArchive --no-daemon --info --build-cache
-    working-directory: mindustry
+      - name: Run robovmArchive
+        run: ./gradlew robovmArchive --no-daemon --info --build-cache
+        working-directory: mindustry
 
-  - name: Find and Upload IPA Artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: Mindustry-iOS-IPA
-      path: mindustry/ios/build/robovm.tmp/*.ipa
-      retention-days: 7
+      - name: Find and Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mindustry-iOS-IPA
+          path: mindustry/ios/build/robovm.tmp/*.ipa
+          retention-days: 7
 
-  - name: List Generated IPA files
-    run: |
-      echo "Found IPA files (should match uploaded file):"
-      find mindustry -type f -name "*.ipa" -print || true
+      - name: List Generated IPA files
+        run: |
+          echo "Found IPA files (should match uploaded file):"
+          find mindustry -type f -name "*.ipa" -print || true
