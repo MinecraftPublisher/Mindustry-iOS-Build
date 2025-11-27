@@ -7,24 +7,22 @@ on:
 
 jobs:
   build-ipa:
-    runs-on: macos-latest # macOS is required for iOS builds
+    runs-on: macos-latest
 
     steps:
       - name: Checkout Workflow Repository
         uses: actions/checkout@v4
         with:
-          # This is the repository where your workflow file lives
           persist-credentials: true
-
-      # 1. Checkout Mindustry (Target Repo)
+          
       - name: Checkout Mindustry Repository
         uses: actions/checkout@v4
         with:
           repository: Anuken/Mindustry
           path: mindustry
+          lfs: true
+          submodiles: recursive
 
-      # 2. Checkout Arc (Source of Native Libraries)
-      # This step is CRITICAL to get the missing .a files.
       - name: Checkout Arc Repository for Natives
         uses: actions/checkout@v4
         with:
@@ -42,7 +40,6 @@ jobs:
           cp Arc/natives/natives-freetype-ios/libs/libarc-freetype.a mindustry/ios/libs/
           cp Arc/natives/**/*.a mindustry/ios/libs/ || true
           
-          echo "Verification: Contents of mindustry/ios/libs/"
           ls -l mindustry/ios/libs/
 
       - name: Make Gradle Wrapper Executable
@@ -72,7 +69,7 @@ jobs:
           path: mindustry/ios/build/robovm.tmp/*.ipa
           retention-days: 7
 
-      - name: List Generated IPA Files (Optional verification)
+      - name: List Generated IPA files
         run: |
           echo "Found IPA files (should match uploaded file):"
           find mindustry -type f -name "*.ipa" -print || true
