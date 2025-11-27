@@ -56,7 +56,6 @@ jobs:
             echo "" >> "$file"
             echo "iosSkipSigning = true" >> "$file"
           fi
-        working-directory: mindustry 
 
       - name: Run robovmArchive
         run: ./gradlew robovmArchive --no-daemon --info
