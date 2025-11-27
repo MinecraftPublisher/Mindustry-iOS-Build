@@ -9,7 +9,6 @@ jobs:
 build-ipa:
 runs-on: macos-latest
 
-```
 steps:
   - name: Checkout Workflow Repository
     uses: actions/checkout@v4
@@ -143,4 +142,3 @@ steps:
     run: |
       echo "Found IPA files (should match uploaded file):"
       find mindustry -type f -name "*.ipa" -print || true
-```
